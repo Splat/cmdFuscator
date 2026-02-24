@@ -1,0 +1,52 @@
+{
+  "versions": { "argfuscator": "2.0", "format": "2.0" },
+  "profiles": [
+    {
+      "executableVersion": "5.1.22621.4391",
+      "platform": "windows",
+      "operatingSystem": "Windows",
+      "operatingSystemVersion": "11 (23H2)",
+      "alias": ["pwsh"],
+      "parameters": {
+        "command": [
+          { "command": "powershell" },
+          { "argument": "-Command" },
+          { "value": "Get-Process" }
+        ],
+        "arguments": [
+          { "flags": ["-Command", "-c"], "valueCount": 1 },
+          { "flags": ["-NonInteractive", "-NonI"], "valueCount": 0 },
+          { "flags": ["-NoProfile", "-NoP"], "valueCount": 0 },
+          { "flags": ["-ExecutionPolicy", "-EP", "-Ex"], "valueCount": 1 },
+          { "flags": ["-EncodedCommand", "-EnC", "-En"], "valueCount": 1 },
+          { "flags": ["-WindowStyle", "-W"], "valueCount": 1 },
+          { "flags": ["-NoExit", "-NoE"], "valueCount": 0 },
+          { "flags": ["-File", "-F"], "valueCount": 1 }
+        ],
+        "modifiers": {
+          "RandomCase": {
+            "AppliesTo": ["command", "argument", "value"],
+            "Probability": "0.5"
+          },
+          "QuoteInsertion": {
+            "AppliesTo": ["argument", "value"],
+            "Probability": "0.5"
+          },
+          "OptionCharSubstitution": {
+            "AppliesTo": ["argument"],
+            "Probability": "0.5",
+            "OutputOptionChars": ["-", "/", "\u2013", "\u2014", "\u2212"]
+          },
+          "Shorthands": {
+            "AppliesTo": ["argument"],
+            "Probability": "0.8"
+          },
+          "ReorderArgs": {
+            "AppliesTo": ["argument"],
+            "Probability": "0.5"
+          }
+        }
+      }
+    }
+  ]
+}

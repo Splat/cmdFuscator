@@ -1,0 +1,59 @@
+{
+  "versions": { "argfuscator": "2.0", "format": "2.0" },
+  "profiles": [
+    {
+      "executableVersion": "10.0.22621.4036",
+      "platform": "windows",
+      "operatingSystem": "Windows",
+      "operatingSystemVersion": "11 (23H2)",
+      "parameters": {
+        "command": [
+          { "command": "certutil.exe" },
+          { "argument": "-urlcache" },
+          { "argument": "-split" },
+          { "argument": "-f" },
+          { "url": "https://argfuscator.net/" },
+          { "path": "output.ext" }
+        ],
+        "arguments": [],
+        "modifiers": {
+          "RandomCase": {
+            "AppliesTo": ["argument", "path", "command", "value"],
+            "Probability": "0.5"
+          },
+          "Sed": {
+            "AppliesTo": ["argument", "value"],
+            "Probability": "0.5",
+            "SedStatements": "s/a/\u1d43/i\ns/b/\u1d47/i\ns/c/\u1d9c/i\ns/d/\u1d48/i\ns/e/\u1d49/i\ns/f/\u1da0/i\ns/g/\u1d4d/i\ns/h/\u02b0/i\ns/j/\u02b2/i\ns/k/\u1d4f/i\ns/l/\u02e1/i\ns/m/\u1d50/i\ns/n/\u207f/i\ns/o/\u1d52/i\ns/p/\u1d56/i\ns/r/\u02b3/i\ns/s/\u02e2/i\ns/t/\u1d57/i\ns/u/\u1d58/i\ns/v/\u1d5b/i\ns/w/\u02b7/i\ns/x/\u02e3/i\ns/y/\u02b8/i\ns/z/\u1dbb/i"
+          },
+          "FilePathTransformer": {
+            "AppliesTo": ["path", "value"],
+            "Probability": "0.5",
+            "PathTraversal": true,
+            "SubstituteSlashes": true,
+            "ExtraSlashes": true
+          },
+          "OptionCharSubstitution": {
+            "AppliesTo": ["url", "argument", "value"],
+            "Probability": "0.5",
+            "OutputOptionChars": ["/", "-", "\u2013", "\u2014", "\u2212"]
+          },
+          "CharacterInsertion": {
+            "AppliesTo": ["argument", "value"],
+            "Probability": "0.5",
+            "Characters": [
+              "\u0378", "\u0379", "\u037f", "\u200c", "\u200d",
+              "\u200e", "\u200f", "\u2060", "\u2061", "\u2062",
+              "\u2063", "\u2064", "\u2065"
+            ],
+            "Offset": "2"
+          },
+          "QuoteInsertion": {
+            "AppliesTo": ["path", "url", "argument", "value"],
+            "Probability": "0.5"
+          }
+        }
+      }
+    }
+  ]
+}

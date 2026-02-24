@@ -1,0 +1,44 @@
+{
+  "versions": { "argfuscator": "2.0", "format": "2.0" },
+  "profiles": [
+    {
+      "executableVersion": "5.2.15",
+      "platform": "linux",
+      "operatingSystem": "Ubuntu",
+      "operatingSystemVersion": "22.04",
+      "parameters": {
+        "command": [
+          { "command": "bash" },
+          { "argument": "-c" },
+          { "value": "id" }
+        ],
+        "arguments": [
+          { "flags": ["-c"], "valueCount": 1 },
+          { "flags": ["-i"], "valueCount": 0 },
+          { "flags": ["-s"], "valueCount": 0 },
+          { "flags": ["-l"], "valueCount": 0 },
+          { "flags": ["-r"], "valueCount": 0 },
+          { "flags": ["--norc"], "valueCount": 0 },
+          { "flags": ["--noprofile"], "valueCount": 0 },
+          { "flags": ["-x"], "valueCount": 0 }
+        ],
+        "modifiers": {
+          "RandomCase": {
+            "AppliesTo": ["argument"],
+            "Probability": "0.5"
+          },
+          "QuoteInsertion": {
+            "AppliesTo": ["value"],
+            "Probability": "0.5"
+          },
+          "CharacterInsertion": {
+            "AppliesTo": ["value"],
+            "Probability": "0.5",
+            "Characters": ["\u200c", "\u200d", "\u2060", "\u2061"],
+            "Offset": "1"
+          }
+        }
+      }
+    }
+  ]
+}
