@@ -12,6 +12,8 @@ package charinsert
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"slices"
 	"strconv"
 
 	"cmdFuscator/engine/modifiers"
@@ -47,7 +49,7 @@ type Config struct {
 //
 // Steps:
 //  1. Unmarshal cfg into a Config struct. (DONE)
-//  2. Parse Probability and Offset (strconv.Atoi for Offset).
+//  2. Parse Probability and Offset (strconv.Atoi for Offset). (DONE)
 //  3. For each eligible token:
 //     a. Roll probability; skip if not triggered.
 //     b. Pick a random character from Config.Characters.
@@ -63,18 +65,29 @@ func (c *CharacterInsertion) Apply(tokens []models.Token, cfg json.RawMessage) (
 		return tokens, fmt.Errorf("unmarshal config: %w", err)
 	}
 
-	if probability, err := strconv.ParseFloat(cfgM.Probability, 64); err != nil {
+	probability, err := strconv.ParseFloat(cfgM.Probability, 64)
+	if err != nil {
 		return tokens, fmt.Errorf("parse probability: %w", err)
 	} else if probability < 0 || probability > 1 {
-		return tokens, fmt.Errorf("probability must be between 0 and 1: %w", err)
-	} else {
-		fmt.Println("probability:", probability)
+		return tokens, fmt.Errorf("probability must be between 0 and 1")
 	}
 
-	if offset, err := strconv.Atoi(cfgM.Offset); err != nil {
+	offset, err := strconv.Atoi(cfgM.Offset)
+	if err != nil {
 		return tokens, fmt.Errorf("parse offset: %w", err)
-	} else {
-		fmt.Println("offset:", offset)
+	}
+
+	for t := range tokens {
+		if !slices.Contains(cfgM.AppliesTo, string(tokens[t].Type)) {
+			continue
+		}
+		// ensure the offset is within the bounds of the token
+		boundOffset := len(tokens[t].Value) - 1
+		if offset <= boundOffset {
+			boundOffset = offset
+		}
+
+		tokens[t].Value = tokens[t].Value[:boundOffset] + cfgM.Characters[rand.Intn(len(cfgM.Characters))] + tokens[t].Value[boundOffset:]
 	}
 
 	return tokens, modifiers.ErrNotImplemented
