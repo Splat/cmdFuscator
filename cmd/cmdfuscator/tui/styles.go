@@ -92,6 +92,7 @@ func renderStatusBar(width int) string {
 	keys := []struct{ key, action string }{
 		{"Tab", "Focus"},
 		{"↑↓", "Navigate"},
+		{"←→", "OS Filter"},
 		{"Space", "Toggle"},
 		{"Enter", "Apply"},
 		{"c", "Copy"},
