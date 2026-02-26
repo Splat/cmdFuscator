@@ -272,6 +272,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, keys.Reset):
 		m.output = ""
 		m.outputView.SetContent("")
+		m.outputView.GotoTop()
 		m.copyMsg = ""
 		m.lastErr = nil
 		m.statusMsg = ""
@@ -380,6 +381,7 @@ func (m *Model) applyObfuscation() {
 
 	m.output = result.Output
 	m.outputView.SetContent(result.Output)
+	m.outputView.GotoTop()
 
 	// Build status summary
 	parts := []string{}
@@ -441,6 +443,7 @@ func (m *Model) selectExe(idx int) {
 	m.modCursor = 0
 	m.output = ""
 	m.outputView.SetContent("")
+	m.outputView.GotoTop()
 	m.copyMsg = ""
 	m.statusMsg = ""
 }
@@ -638,8 +641,12 @@ func (m Model) viewSidebar() string {
 	if end > len(m.filtered) {
 		end = len(m.filtered)
 	}
+	maxNameLen := sidebarWidth - panelBorderH - 2 // 2 for "> " or "  " prefix
 	for i := m.exeOffset; i < end; i++ {
 		name := m.filtered[i].Name
+		if len(name) > maxNameLen {
+			name = name[:maxNameLen-1] + "…"
+		}
 		if i == m.exeCursor {
 			listLines = append(listLines, selectedStyle.Render("> "+name))
 		} else {
@@ -684,8 +691,9 @@ func (m Model) viewMain() string {
 
 	// ── Modifier options ──────────────────────────────────────────────────
 	optFocused := m.focused == panelOptions
-	optHeader := sectionStyle.Render("Modifiers") +
-		"  " + dimStyle.Render("[Enter] Apply  [r] Reset")
+	optHeader := lipgloss.NewStyle().MaxWidth(pw).Render(
+		sectionStyle.Render("Modifiers") + "  " + dimStyle.Render("[Enter] Apply  [r] Reset"),
+	)
 	optInner := lipgloss.JoinVertical(lipgloss.Left,
 		optHeader,
 		renderModifierGrid(m.modifiers, m.modCursor, pw),
@@ -694,24 +702,26 @@ func (m Model) viewMain() string {
 
 	// ── Output ────────────────────────────────────────────────────────────
 	outFocused := m.focused == panelOutput
-	outContent := m.output
-	if outContent == "" {
-		outContent = dimStyle.Render("(press Enter to apply obfuscation)")
+	var outViewStr string
+	if m.output == "" {
+		outViewStr = dimStyle.Render("(press Enter to apply obfuscation)")
+	} else {
+		outViewStr = m.outputView.View()
 	}
-	m.outputView.SetContent(outContent)
 	outInner := lipgloss.JoinVertical(lipgloss.Left,
 		sectionStyle.Render("Output")+"  "+m.copyMsg,
-		m.outputView.View(),
+		outViewStr,
 	)
 	outBox := panelStyle(outFocused).Width(pw).Render(outInner)
 
 	// ── Status message ────────────────────────────────────────────────────
-	status := ""
+	statusStr := ""
 	if m.statusMsg != "" {
-		status = m.statusMsg
+		statusStr = m.statusMsg
 	} else if m.selected != nil {
-		status = dimStyle.Render(fmt.Sprintf("%s  •  %d profile(s)", m.selected.Name, len(m.selected.Profiles)))
+		statusStr = dimStyle.Render(fmt.Sprintf("%s  •  %d profile(s)", m.selected.Name, len(m.selected.Profiles)))
 	}
+	status := lipgloss.NewStyle().MaxWidth(mw).Render(statusStr)
 
 	mainContent := lipgloss.JoinVertical(lipgloss.Left,
 		cmdBox,
