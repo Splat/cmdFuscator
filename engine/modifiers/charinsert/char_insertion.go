@@ -87,11 +87,10 @@ func (c *CharacterInsertion) Apply(tokens []models.Token, cfg json.RawMessage) (
 
 	for t := range tokens {
 		if !slices.Contains(cfgM.AppliesTo, string(tokens[t].Type)) {
-			continue
+			continue // only apply to tokens of the specified types from config
 		}
-		// skip if probability doesn't fire
 		if rand.Float64() > probability {
-			continue
+			continue // skip if probability doesn't fire
 		}
 
 		// ensure the offset is within the bounds of the token
