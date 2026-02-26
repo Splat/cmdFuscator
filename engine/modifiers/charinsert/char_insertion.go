@@ -60,9 +60,17 @@ type Config struct {
 // Safety note: the Characters list in the profiles can be very long (hundreds
 // of entries). Use rand.Intn(len(cfg.Characters)) to pick one.
 func (c *CharacterInsertion) Apply(tokens []models.Token, cfg json.RawMessage) ([]models.Token, error) {
+	out := make([]models.Token, len(tokens)) // the eventual return value
+	copy(out, tokens)                        // make a copy of the input tokens for no op situations
+
 	cfgM := &Config{}
 	if err := json.Unmarshal(cfg, cfgM); err != nil {
 		return tokens, fmt.Errorf("unmarshal config: %w", err)
+	}
+
+	// ensure characters is non-empty
+	if len(cfgM.Characters) == 0 {
+		return tokens, fmt.Errorf("characters list must not be empty")
 	}
 
 	probability, err := strconv.ParseFloat(cfgM.Probability, 64)
@@ -81,14 +89,22 @@ func (c *CharacterInsertion) Apply(tokens []models.Token, cfg json.RawMessage) (
 		if !slices.Contains(cfgM.AppliesTo, string(tokens[t].Type)) {
 			continue
 		}
-		// ensure the offset is within the bounds of the token
-		boundOffset := len(tokens[t].Value) - 1
-		if offset <= boundOffset {
-			boundOffset = offset
+		// skip if probability doesn't fire
+		if rand.Float64() > probability {
+			continue
 		}
 
-		tokens[t].Value = tokens[t].Value[:boundOffset] + cfgM.Characters[rand.Intn(len(cfgM.Characters))] + tokens[t].Value[boundOffset:]
+		// ensure the offset is within the bounds of the token
+		runes := []rune(tokens[t].Value)
+		pos := offset
+		if pos >= len(runes) {
+			pos = len(runes)
+		}
+
+		rdmChar := cfgM.Characters[rand.Intn(len(cfgM.Characters))]
+		result := append(runes[:pos:pos], append([]rune(rdmChar), runes[pos:]...)...)
+		out[t].Value = string(result)
 	}
 
-	return tokens, modifiers.ErrNotImplemented
+	return out, nil
 }
