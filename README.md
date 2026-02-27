@@ -166,20 +166,20 @@ This section is a curriculum for working through the stubs in a logical order. E
 
 ### What to Implement
 
-| File                             | What to implement                                     |
-|----------------------------------|-------------------------------------------------------|
-| `engine/engine.go`               | `Tokenize()` — parse command string into typed tokens |
-| `engine/engine.go`               | `Render()` — join tokens back into a command string   |
-| `engine/modifiers/randomcase/`   | Probabilistic per-character case flip                 |
-| `engine/modifiers/quoteinsert/`  | Insert empty `""` or `''` inside tokens               |
-| `engine/modifiers/optionchar/`   | Replace `-` with `–`, `/`, `—`, etc.                  |
-| `engine/modifiers/sed/`          | Parse `s/a/ᵃ/i` rules and apply per-char substitution |
-| `engine/modifiers/filepath/`     | Path traversal, slash substitution, extra separators  |
-| `engine/modifiers/charinsert/`   | Insert invisible Unicode codepoints at a fixed offset |
-| `engine/modifiers/shorthands/`   | Abbreviate flags to shortest unambiguous prefix       |
-| `engine/modifiers/urltransform/` | Hex/octal IP encoding, URL path traversal             |
-| `engine/modifiers/reorderargs/`  | Shuffle flag–value pairs while keeping them grouped   |
-| `engine/modifiers/regex/`        | Regex find-and-replace substitutions                  |
+| File                             | What to implement                                       |
+|----------------------------------|---------------------------------------------------------|
+| `engine/engine.go`               | `Tokenize()` — parse command string into typed tokens   |
+| `engine/engine.go`               | `Render()` — join tokens back into a command string     |
+| `engine/modifiers/randomcase/`   | Probabilistic per-character case flip (**implemented**) |
+| `engine/modifiers/quoteinsert/`  | Insert empty `""` or `''` inside tokens                 |
+| `engine/modifiers/optionchar/`   | Replace `-` with `–`, `/`, `—`, etc.                    |
+| `engine/modifiers/sed/`          | Parse `s/a/ᵃ/i` rules and apply per-char substitution   |
+| `engine/modifiers/filepath/`     | Path traversal, slash substitution, extra separators    |
+| `engine/modifiers/charinsert/`   | Insert invisible Unicode codepoints at a fixed offset  (**implemented**) |
+| `engine/modifiers/shorthands/`   | Abbreviate flags to shortest unambiguous prefix         |
+| `engine/modifiers/urltransform/` | Hex/octal IP encoding, URL path traversal               |
+| `engine/modifiers/reorderargs/`  | Shuffle flag–value pairs while keeping them grouped     |
+| `engine/modifiers/regex/`        | Regex find-and-replace substitutions                    |
 
 Each stub has detailed guidance comments. The TUI gracefully labels unimplemented
 modifiers as "not implemented" in the status bar without crashing.
