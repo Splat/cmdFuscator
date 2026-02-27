@@ -33,6 +33,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"unicode"
 
 	"cmdFuscator/engine"
 	"cmdFuscator/loader"
@@ -113,6 +114,7 @@ type Model struct {
 
 	// output
 	output     string
+	rawOutput  string
 	outputView viewport.Model
 	copyMsg    string
 
@@ -271,7 +273,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case key.Matches(msg, keys.Reset):
 		m.output = ""
+		m.rawOutput = ""
 		m.outputView.SetContent("")
+		m.outputView.GotoTop()
 		m.copyMsg = ""
 		m.lastErr = nil
 		m.statusMsg = ""
@@ -354,6 +358,22 @@ func (m *Model) toggleModifier() {
 	}
 }
 
+// escapeInvisible renders non-printing Unicode codepoints (excluding \n and \t)
+// as highlighted [U+XXXX] markers so they are visible in the raw pane.
+func escapeInvisible(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if r == '\n' || r == '\t' {
+			b.WriteRune(r)
+		} else if !unicode.IsPrint(r) || unicode.Is(unicode.Cf, r) {
+			b.WriteString(rawEscapeStyle.Render(fmt.Sprintf("[U+%04X]", r)))
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 func (m *Model) applyObfuscation() {
 	if m.selected == nil {
 		m.statusMsg = "select an executable first"
@@ -379,7 +399,9 @@ func (m *Model) applyObfuscation() {
 	}
 
 	m.output = result.Output
+	m.rawOutput = escapeInvisible(result.Output)
 	m.outputView.SetContent(result.Output)
+	m.outputView.GotoTop()
 
 	// Build status summary
 	parts := []string{}
@@ -440,7 +462,9 @@ func (m *Model) selectExe(idx int) {
 	m.modifiers = engine.ModifierSummary(enabled)
 	m.modCursor = 0
 	m.output = ""
+	m.rawOutput = ""
 	m.outputView.SetContent("")
+	m.outputView.GotoTop()
 	m.copyMsg = ""
 	m.statusMsg = ""
 }
@@ -528,6 +552,9 @@ const (
 	// panelBorderH is the number of columns a panelStyle border+padding adds
 	// (left border + left pad + right pad + right border = 1+1+1+1 = 4).
 	panelBorderH = 4
+
+	// rawFixedH is the fixed line height of the raw output sub-pane.
+	rawFixedH = 3
 )
 
 // bodyHeight is the number of terminal lines available between the header and
@@ -568,15 +595,18 @@ func (m *Model) optModifierRows() int {
 // gaps and status bar fill bodyHeight exactly.
 //
 // Accounting (lines):
-//   cmdBox  = sectionLabel(1) + input(1) + panelBorderV(2)   = 4
-//   gap                                                        = 1
+//   cmdBox  = sectionLabel(1) + input(1) + panelBorderV(2)              = 4
+//   gap                                                                   = 1
 //   optBox  = sectionLabel(1) + optRows  + panelBorderV(2)
-//   gap                                                        = 1
-//   outBox  = sectionLabel(1) + viewH    + panelBorderV(2)
-//   gap                                                        = 1
-//   status                                                     = 1
+//   gap                                                                   = 1
+//   outBox  = sectionLabel(1) + viewH + divider(1) + rawLabel(1)
+//             + rawFixedH(3) + panelBorderV(2)                           = 8 + viewH
+//   gap                                                                   = 1
+//   status                                                                = 1
+//
+// Total fixed = 4+1+(1+optRows+2)+1+(1+1+1+rawFixedH+2)+1+1 = 19 + optRows
 func (m *Model) outputViewHeight() int {
-	fixed := 4 + 1 + (1+m.optModifierRows()+panelBorderV) + 1 + (1+panelBorderV) + 1 + 1
+	fixed := 4 + 1 + (1+m.optModifierRows()+panelBorderV) + 1 + (1+1+1+rawFixedH+panelBorderV) + 1 + 1
 	h := m.bodyHeight() - fixed
 	if h < 2 {
 		return 2
@@ -638,8 +668,12 @@ func (m Model) viewSidebar() string {
 	if end > len(m.filtered) {
 		end = len(m.filtered)
 	}
+	maxNameLen := sidebarWidth - panelBorderH - 2 // 2 for "> " or "  " prefix
 	for i := m.exeOffset; i < end; i++ {
 		name := m.filtered[i].Name
+		if len(name) > maxNameLen {
+			name = name[:maxNameLen-1] + "…"
+		}
 		if i == m.exeCursor {
 			listLines = append(listLines, selectedStyle.Render("> "+name))
 		} else {
@@ -684,8 +718,9 @@ func (m Model) viewMain() string {
 
 	// ── Modifier options ──────────────────────────────────────────────────
 	optFocused := m.focused == panelOptions
-	optHeader := sectionStyle.Render("Modifiers") +
-		"  " + dimStyle.Render("[Enter] Apply  [r] Reset")
+	optHeader := lipgloss.NewStyle().MaxWidth(pw).Render(
+		sectionStyle.Render("Modifiers") + "  " + dimStyle.Render("[Enter] Apply  [r] Reset"),
+	)
 	optInner := lipgloss.JoinVertical(lipgloss.Left,
 		optHeader,
 		renderModifierGrid(m.modifiers, m.modCursor, pw),
@@ -694,24 +729,37 @@ func (m Model) viewMain() string {
 
 	// ── Output ────────────────────────────────────────────────────────────
 	outFocused := m.focused == panelOutput
-	outContent := m.output
-	if outContent == "" {
-		outContent = dimStyle.Render("(press Enter to apply obfuscation)")
+	var outViewStr string
+	if m.output == "" {
+		outViewStr = dimStyle.Render("(press Enter to apply obfuscation)")
+	} else {
+		outViewStr = m.outputView.View()
 	}
-	m.outputView.SetContent(outContent)
+	divider := dimStyle.Render(strings.Repeat("─", pw))
+	rawLabel := dimStyle.Render("raw")
+	var rawStr string
+	if m.rawOutput == "" {
+		rawStr = dimStyle.Render("(no output)")
+	} else {
+		rawStr = lipgloss.NewStyle().Width(pw).MaxHeight(rawFixedH).Render(m.rawOutput)
+	}
 	outInner := lipgloss.JoinVertical(lipgloss.Left,
 		sectionStyle.Render("Output")+"  "+m.copyMsg,
-		m.outputView.View(),
+		outViewStr,
+		divider,
+		rawLabel,
+		rawStr,
 	)
 	outBox := panelStyle(outFocused).Width(pw).Render(outInner)
 
 	// ── Status message ────────────────────────────────────────────────────
-	status := ""
+	statusStr := ""
 	if m.statusMsg != "" {
-		status = m.statusMsg
+		statusStr = m.statusMsg
 	} else if m.selected != nil {
-		status = dimStyle.Render(fmt.Sprintf("%s  •  %d profile(s)", m.selected.Name, len(m.selected.Profiles)))
+		statusStr = dimStyle.Render(fmt.Sprintf("%s  •  %d profile(s)", m.selected.Name, len(m.selected.Profiles)))
 	}
+	status := lipgloss.NewStyle().MaxWidth(mw).Render(statusStr)
 
 	mainContent := lipgloss.JoinVertical(lipgloss.Left,
 		cmdBox,

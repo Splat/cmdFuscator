@@ -85,6 +85,10 @@ var (
 	notImplStyle = lipgloss.NewStyle().
 			Foreground(clrGold).
 			Italic(true)
+
+	rawEscapeStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(clrCyan)
 )
 
 // statusBar renders the bottom help line.
