@@ -45,20 +45,15 @@ type Config struct {
 
 // Apply implements modifiers.Modifier.
 //
-// TODO: Implement this method.
-//
 // Steps:
-//  1. Unmarshal cfg into a Config struct. (DONE)
-//  2. Parse Probability and Offset (strconv.Atoi for Offset). (DONE)
+//  1. Unmarshal cfg into a Config struct.
+//  2. Parse Probability and Offset (strconv.Atoi for Offset).
 //  3. For each eligible token:
 //     a. Roll probability; skip if not triggered.
 //     b. Pick a random character from Config.Characters.
 //     c. Insert it at position Offset within the rune slice of token.Value
 //     (clamp Offset to len(runes) if the token is shorter).
 //  4. Return updated tokens.
-//
-// Safety note: the Characters list in the profiles can be very long (hundreds
-// of entries). Use rand.Intn(len(cfg.Characters)) to pick one.
 func (c *CharacterInsertion) Apply(tokens []models.Token, cfg json.RawMessage) ([]models.Token, error) {
 	out := make([]models.Token, len(tokens)) // the eventual return value
 	copy(out, tokens)                        // make a copy of the input tokens for no op situations
