@@ -72,6 +72,15 @@ func Get(name string) (Modifier, bool) {
 	return m, ok
 }
 
+// ParseConfig parses a modifier config from a raw JSON message.
+func ParseConfig(raw json.RawMessage) (models.BaseModifierConfig, error) {
+	var cfg models.BaseModifierConfig
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		return cfg, err
+	}
+	return cfg, nil
+}
+
 // ─── Sentinel error ───────────────────────────────────────────────────────────
 
 // ErrNotImplemented is returned by stub Apply() methods to signal that the

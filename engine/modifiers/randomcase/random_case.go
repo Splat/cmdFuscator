@@ -63,7 +63,7 @@ func (r *RandomCase) Apply(tokens []models.Token, cfg json.RawMessage) ([]models
 	probability, err := strconv.ParseFloat(cfgM.Probability, 64)
 	if err != nil {
 		return tokens, fmt.Errorf("parse probability: %w", err)
-	} else if probability <= 0 || probability > 1 {
+	} else if probability < 0 || probability > 1 {
 		return tokens, fmt.Errorf("probability must be between 0 and 1")
 	}
 
@@ -71,13 +71,9 @@ func (r *RandomCase) Apply(tokens []models.Token, cfg json.RawMessage) ([]models
 		if !slices.Contains(cfgM.AppliesTo, string(tokens[idx].Type)) {
 			continue // only apply to tokens of the specified types from config
 		}
-		if rand.Float64() > probability {
-			continue // skip if probability doesn't fire'
-		}
-
 		runes := []rune(tokens[idx].Value)
 		for charIdx, r := range runes {
-			if flip := rand.Intn(2) == 0; flip { // randomly flip the case of the character
+			if rand.Float64() < probability { // flip this character's case with given probability
 				if unicode.IsUpper(r) {
 					runes[charIdx] = unicode.ToLower(runes[charIdx])
 				} else {
