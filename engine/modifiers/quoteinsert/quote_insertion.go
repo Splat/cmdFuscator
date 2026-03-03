@@ -1,10 +1,10 @@
 // Package quoteinsert implements the QuoteInsertion obfuscation modifier.
 //
-// Technique: insert an empty pair of quotes ("" or '') at a random position
+// Technique: insert an empty pair of quotes ("" or ”) at a random position
 // inside a token's value. The shell ignores the empty string, but the literal
 // command text looks different to signature scanners.
 //
-// Example:  -urlcache  →  -url""cache  or  -ur''lcache
+// Example:  -urlcache  →  -url""cache  or  -ur”lcache
 //
 // ArgFuscator reference: src/Modifiers/QuoteInsertion.ts
 // Applies to token types: path, url, argument, value
@@ -12,6 +12,8 @@ package quoteinsert
 
 import (
 	"encoding/json"
+	"math/rand/v2"
+	"strconv"
 
 	"cmdFuscator/engine/modifiers"
 	"cmdFuscator/models"
@@ -42,10 +44,29 @@ type Config struct {
 //  3. For each eligible token:
 //     a. Roll rand.Float64(); if >= probability, leave token unchanged.
 //     b. Pick a random insertion position between 1 and len(runes)-1
-//        (avoid position 0 or end to keep the token visually meaningful).
+//     (avoid position 0 or end to keep the token visually meaningful).
 //     c. Pick a quote character at random: `"` or `'`.
-//     d. Insert `""` (or `''`) at the chosen position.
+//     d. Insert `""` (or `”`) at the chosen position.
 //  4. Return updated tokens.
 func (q *QuoteInsertion) Apply(tokens []models.Token, cfg json.RawMessage) ([]models.Token, error) {
+	cfgM := &Config{}
+	if err := json.Unmarshal(cfg, cfgM); err != nil {
+		return nil, err
+	}
+
+	probability, err := strconv.ParseFloat(cfgM.Probability, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx := range tokens {
+		if rand.Float64() >= probability {
+			continue
+		}
+		runes := []rune(tokens[idx].Value)
+		pos := rand.IntN(len(runes)-1) + 1
+
+	}
+
 	return tokens, modifiers.ErrNotImplemented
 }
