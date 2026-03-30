@@ -49,7 +49,7 @@ cmdFuscator/
         ├── all/
         │   └── all.go                  # Blank imports to register all modifiers
         ├── charinsert/
-        │   └── char_insertion.go       # STUB – TODO
+        │   └── char_insertion.go       # Completed
         ├── filepath/
         │   └── file_path.go            # STUB – TODO
         ├── optionchar/
@@ -57,7 +57,7 @@ cmdFuscator/
         ├── quoteinsert/
         │   └── quote_insertion.go      # STUB – TODO
         ├── randomcase/
-        │   └── random_case.go          # STUB – TODO
+        │   └── random_case.go          # Completed
         ├── regex/
         │   └── regex.go                # STUB – TODO
         ├── reorderargs/
